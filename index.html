@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>AI Video Maker</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+    .app { max-width: 900px; margin: auto; padding: 18px; }
+    header {
+      background: #111827;
+      color: white;
+      border-radius: 22px;
+      padding: 24px 20px;
+      margin-bottom: 16px;
+    }
+    header h1 { margin: 0 0 7px; font-size: 28px; }
+    header p { margin: 0; color: #d1d5db; }
+    .card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 5px 20px rgba(0,0,0,.06);
+    }
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+    textarea, select, input[type="text"] {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      padding: 13px;
+      font: inherit;
+      outline: none;
+    }
+    textarea { min-height: 150px; resize: vertical; }
+    textarea:focus, select:focus, input:focus { border-color: #111827; }
+    .formats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .format {
+      border: 2px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+    }
+    .format input { display: none; }
+    .format.active { border-color: #111827; background: #f3f4f6; }
+    .preview-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 130px;
+      background: #f9fafb;
+      border: 2px dashed #d1d5db;
+      border-radius: 14px;
+      padding: 12px;
+      margin-top: 12px;
+    }
+    #imagePreview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      width: 100%;
+    }
+    .thumb {
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+    }
+    .upload {
+      display: block;
+      border: 2px dashed #9ca3af;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      background: #fafafa;
+    }
+    .upload input { display: none; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 15px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    #generateBtn { background: #111827; color: white; }
+    #resetBtn { background: #e5e7eb; color: #111827; margin-top: 10px; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .status {
+      display: none;
+      margin-top: 15px;
+      padding: 13px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      text-align: center;
+      font-weight: 700;
+    }
+    .result {
+      display: none;
+      text-align: center;
+    }
+    .result .fake-video {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto 15px;
+      aspect-ratio: 16/9;
+      background: #111827;
+      color: white;
+      border-radius: 16px;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+    .note { font-size: 13px; color: #6b7280; margin-top: 8px; }
+    @media (max-width: 600px) {
+      .app { padding: 12px; }
+      header h1 { font-size: 24px; }
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>🎬 AI Video Maker</h1>
+      <p>Create your video project from a script and photos.</p>
+    </header>
+
+    <section class="card">
+      <label for="script">📝 Your Script</label>
+      <textarea id="script" placeholder="Paste or type your story/script here..."></textarea>
+      <div class="note" id="wordCount">0 characters</div>
+    </section>
+
+    <section class="card">
+      <label>🖼️ Upload Photos</label>
+      <label class="upload">
+        <input id="photos" type="file" accept="image/*" multiple />
+        <strong>Tap to choose photos</strong><br />
+        <span class="note">You can select multiple images.</span>
+      </label>
+      <div class="preview-box">
+        <div id="imagePreview"><span class="note">Selected photos will appear here.</span></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <label>📐 Video Format</label>
+      <div class="formats">
+        <label class="format active" id="verticalLabel">
+          <input type="radio" name="format" value="9:16" checked />
+          <strong>📱 9:16</strong><br /><span class="note">Shorts / Reels</span>
+        </label>
+        <label class="format" id="landscapeLabel">
+          <input type="radio" name="format" value="16:9" />
+          <strong>🖥️ 16:9</strong><br /><span class="note">YouTube</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="row">
+        <div>
+          <label for="style">🎨 Video Style</label>
+          <select id="style">
+            <option>Cinematic</option>
+            <option>Indian TV Serial</option>
+            <option>Realistic</option>
+            <option>Cartoon / 3D</option>
+            <option>Documentary</option>
+            <option>Comedy</option>
+          </select>
+        </div>
+        <div>
+          <label for="voice">🔊 Voice</label>
+          <select id="voice">
+            <option>Hindi Male</option>
+            <option>Hindi Female</option>
+            <option>English Male</option>
+            <option>English Female</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <label for="title">🎞️ Video Title</label>
+      <input id="title" type="text" placeholder="Enter your video title" />
+    </section>
+
+    <section class="card">
+      <button id="generateBtn">✨ Generate Video Project</button>
+      <button id="resetBtn">↻ Reset</button>
+      <div class="status" id="status"></div>
+    </section>
+
+    <section class="card result" id="result">
+      <h2>✅ Project Ready</h2>
+      <div class="fake-video" id="resultPreview">
+        <div>
+          <div style="font-size:42px;">▶️</div>
+          <div id="resultTitle">Your video preview</div>
+        </div>
+      </div>
+      <p id="resultInfo"></p>
+      <p class="note">
+        Step 1 is a front-end prototype. It does not generate a real AI video yet.
+        Real AI generation/API integration will be added in a later step.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    const scriptBox = document.getElementById("script");
+    const wordCount = document.getElementById("wordCount");
+    const photos = document.getElementById("photos");
+    const imagePreview = document.getElementById("imagePreview");
+    const generateBtn = document.getElementById("generateBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const status = document.getElementById("status");
+    const result = document.getElementById("result");
+    const title = document.getElementById("title");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultInfo = document.getElementById("resultInfo");
+
+    function updateCount() {
+      wordCount.textContent = `${scriptBox.value.length} characters`;
+    }
+    scriptBox.addEventListener("input", updateCount);
+
+    document.querySelectorAll('input[name="format"]').forEach(input => {
+      input.addEventListener("change", () => {
+        document.querySelectorAll(".format").forEach(el => el.classList.remove("active"));
+        input.closest(".format").classList.add("active");
+      });
+    });
+
+    photos.addEventListener("change", () => {
+      imagePreview.innerHTML = "";
+      const files = [...photos.files];
+
+      if (!files.length) {
+        imagePreview.innerHTML = '<span class="note">Selected photos will appear here.</span>';
+        return;
+      }
+
+      files.forEach(file => {
+        const img = document.createElement("img");
+        img.className = "thumb";
+        img.alt = file.name;
+        img.src = URL.createObjectURL(file);
+        imagePreview.appendChild(img);
+      });
+    });
+
+    generateBtn.addEventListener("click", () => {
+      const script = scriptBox.value.trim();
+      const selectedFormat = document.querySelector('input[name="format"]:checked').value;
+      const selectedStyle = document.getElementById("style").value;
+      const selectedVoice = document.getElementById("voice").value;
+      const selectedPhotos = photos.files.length;
+      const videoTitle = title.value.trim() || "My AI Video";
+
+      if (!script) {
+        alert("Please enter your script first.");
+        scriptBox.focus();
+        return;
+      }
+
+      status.style.display = "block";
+      status.textContent = "⚙️ Preparing your video project...";
+      generateBtn.disabled = true;
+      result.style.display = "none";
+
+      setTimeout(() => {
+        status.textContent = "✅ Project prepared successfully!";
+        result.style.display = "block";
+        resultTitle.textContent = videoTitle;
+        resultInfo.textContent =
+          `${selectedFormat} • ${selectedStyle} • ${selectedVoice} • ${selectedPhotos} photo(s)`;
+
+        generateBtn.disabled = false;
+        result.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 1200);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      scriptBox.value = "";
+      title.value = "";
+      photos.value = "";
+      imagePreview.innerHTML = '<span class="note">Selected photos will appear here.</span>';
+      document.querySelector('input[value="9:16"]').checked = true;
+      document.querySelectorAll(".format").forEach(el => el.classList.remove("active"));
+      document.getElementById("verticalLabel").classList.add("active");
+      document.getElementById("style").selectedIndex = 0;
+      document.getElementById("voice").selectedIndex = 0;
+      status.style.display = "none";
+      result.style.display = "none";
+      updateCount();
+    });
+  </script>
+</body>
+</html>
